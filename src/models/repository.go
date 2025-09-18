@@ -66,7 +66,7 @@ func NewRepository(path string) (*Repository, error) {
 	// 2. Get the current branch
 	// 3. Check if the repository is clean
 	// 4. Get the remotes
-	
+
 	// For now, we'll just return a basic repository for testing
 	return &Repository{
 		Path:          filepath.Join(path, ".git"),
