@@ -2,9 +2,9 @@ package repository
 
 import (
 	"os"
-	"os/exec"
 	"path/filepath"
-	"strings"
+
+	"github.com/go-git/go-git/v5"
 
 	"github.com/hhiroshell/git-client-tui/src/models"
 )
@@ -21,6 +21,7 @@ type RepositoryService interface {
 // GitRepositoryService implements the RepositoryService interface
 type GitRepositoryService struct {
 	currentRepo *models.Repository
+	gitRepo     *git.Repository
 }
 
 // NewGitRepositoryService creates a new GitRepositoryService
@@ -59,26 +60,15 @@ func (s *GitRepositoryService) DiscoverRepository() (*models.Repository, error) 
 
 // findGitRepository finds a git repository in the given path or its parents
 func (s *GitRepositoryService) findGitRepository(startPath string) (*models.Repository, error) {
-	// In a real implementation, this would:
-	// 1. Check if startPath contains a .git directory
-	// 2. If not, check its parent directory
-	// 3. Continue until the root directory is reached
-
-	// This implementation just checks if the current directory is a git repository
-	gitPath := filepath.Join(startPath, ".git")
-	_, err := os.Stat(gitPath)
+	// Open the repository using go-git
+	repo, err := git.PlainOpenWithOptions(startPath, &git.PlainOpenOptions{
+		DetectDotGit: true,
+	})
 	if err != nil {
-		if os.IsNotExist(err) {
+		if err == git.ErrRepositoryNotExists {
 			return nil, &models.ServiceError{
 				Operation: "findGitRepository",
 				Cause:     models.ErrNotARepository,
-				Context:   map[string]interface{}{"path": startPath},
-			}
-		}
-		if os.IsPermission(err) {
-			return nil, &models.ServiceError{
-				Operation: "findGitRepository",
-				Cause:     models.ErrPermissionDenied,
 				Context:   map[string]interface{}{"path": startPath},
 			}
 		}
@@ -89,87 +79,87 @@ func (s *GitRepositoryService) findGitRepository(startPath string) (*models.Repo
 		}
 	}
 
-	// Get the current branch
-	cmd := exec.Command("git", "rev-parse", "--abbrev-ref", "HEAD")
-	cmd.Dir = startPath
-	out, err := cmd.Output()
-	if err != nil {
-		return nil, &models.ServiceError{
-			Operation: "findGitRepository",
-			Cause:     models.ErrGitCommandFailed,
-			Context:   map[string]interface{}{"path": startPath, "command": "git rev-parse --abbrev-ref HEAD"},
-		}
-	}
-	currentBranch := strings.TrimSpace(string(out))
+	// Store the git repository for future use
+	s.gitRepo = repo
 
-	// Check if the repository is clean
-	cmd = exec.Command("git", "status", "--porcelain")
-	cmd.Dir = startPath
-	out, err = cmd.Output()
+	// Use the traditional location for .git directory path
+	gitPath := filepath.Join(startPath, ".git")
+
+	// Get the current branch
+	head, err := repo.Head()
 	if err != nil {
 		return nil, &models.ServiceError{
 			Operation: "findGitRepository",
 			Cause:     models.ErrGitCommandFailed,
-			Context:   map[string]interface{}{"path": startPath, "command": "git status --porcelain"},
+			Context:   map[string]interface{}{"path": startPath, "error": "unable to get HEAD"},
 		}
 	}
-	isClean := len(strings.TrimSpace(string(out))) == 0
+
+	// Extract branch name from the reference
+	currentBranch := ""
+	if head.Name().IsBranch() {
+		currentBranch = head.Name().Short()
+	} else {
+		// We're in detached HEAD state
+		currentBranch = head.Hash().String()[:7] // Short SHA
+	}
+
+	// Get the worktree status to check if repo is clean
+	worktree, err := repo.Worktree()
+	if err != nil {
+		return nil, &models.ServiceError{
+			Operation: "findGitRepository",
+			Cause:     err,
+			Context:   map[string]interface{}{"path": startPath},
+		}
+	}
+
+	status, err := worktree.Status()
+	if err != nil {
+		return nil, &models.ServiceError{
+			Operation: "findGitRepository",
+			Cause:     models.ErrGitCommandFailed,
+			Context:   map[string]interface{}{"path": startPath, "error": "unable to get status"},
+		}
+	}
+
+	isClean := status.IsClean()
 
 	// Get the remotes
-	remotes, err := s.getRemotes(startPath)
+	remotes, err := s.getRemotes(repo)
 	if err != nil {
 		return nil, err
 	}
 
 	return &models.Repository{
-		Path:         gitPath,
-		WorkingDir:   startPath,
+		Path:          gitPath,
+		WorkingDir:    startPath,
 		CurrentBranch: currentBranch,
-		IsClean:      isClean,
-		Remotes:      remotes,
+		IsClean:       isClean,
+		Remotes:       remotes,
 	}, nil
 }
 
-// getRemotes gets the remotes of the repository
-func (s *GitRepositoryService) getRemotes(repoPath string) ([]models.Remote, error) {
-	cmd := exec.Command("git", "remote", "-v")
-	cmd.Dir = repoPath
-	out, err := cmd.Output()
+// getRemotes gets the remotes of the repository using go-git
+func (s *GitRepositoryService) getRemotes(repo *git.Repository) ([]models.Remote, error) {
+	gitRemotes, err := repo.Remotes()
 	if err != nil {
 		return nil, &models.ServiceError{
 			Operation: "getRemotes",
 			Cause:     models.ErrGitCommandFailed,
-			Context:   map[string]interface{}{"path": repoPath, "command": "git remote -v"},
+			Context:   map[string]interface{}{"error": "unable to get remotes"},
 		}
 	}
 
-	lines := strings.Split(strings.TrimSpace(string(out)), "\n")
-	remotes := make([]models.Remote, 0)
-	seen := make(map[string]bool)
-
-	for _, line := range lines {
-		if line == "" {
-			continue
+	remotes := make([]models.Remote, 0, len(gitRemotes))
+	for _, remote := range gitRemotes {
+		config := remote.Config()
+		if len(config.URLs) > 0 {
+			remotes = append(remotes, models.Remote{
+				Name: config.Name,
+				URL:  config.URLs[0], // Use the first URL
+			})
 		}
-
-		parts := strings.Fields(line)
-		if len(parts) < 2 {
-			continue
-		}
-
-		name := parts[0]
-		url := parts[1]
-
-		// Skip duplicates (fetch and push entries)
-		if seen[name] {
-			continue
-		}
-
-		seen[name] = true
-		remotes = append(remotes, models.Remote{
-			Name: name,
-			URL:  url,
-		})
 	}
 
 	return remotes, nil
@@ -178,7 +168,7 @@ func (s *GitRepositoryService) getRemotes(repoPath string) ([]models.Remote, err
 // GetStatus gets the current status of the repository
 func (s *GitRepositoryService) GetStatus() (*models.RepositoryStatus, error) {
 	// Make sure we have a repository
-	if s.currentRepo == nil {
+	if s.currentRepo == nil || s.gitRepo == nil {
 		_, err := s.DiscoverRepository()
 		if err != nil {
 			return nil, err
@@ -188,59 +178,55 @@ func (s *GitRepositoryService) GetStatus() (*models.RepositoryStatus, error) {
 	// Get the current branch
 	currentBranch := s.currentRepo.CurrentBranch
 
-	// Get the status
-	cmd := exec.Command("git", "status", "--porcelain", "-z")
-	cmd.Dir = s.currentRepo.WorkingDir
-	out, err := cmd.Output()
+	// Get the worktree status
+	worktree, err := s.gitRepo.Worktree()
+	if err != nil {
+		return nil, &models.ServiceError{
+			Operation: "GetStatus",
+			Cause:     err,
+			Context:   map[string]interface{}{"path": s.currentRepo.WorkingDir},
+		}
+	}
+
+	status, err := worktree.Status()
 	if err != nil {
 		return nil, &models.ServiceError{
 			Operation: "GetStatus",
 			Cause:     models.ErrGitCommandFailed,
-			Context:   map[string]interface{}{"path": s.currentRepo.WorkingDir, "command": "git status --porcelain -z"},
+			Context:   map[string]interface{}{"path": s.currentRepo.WorkingDir, "error": "unable to get status"},
 		}
 	}
 
-	// Parse the status
-	stagedChanges, unstagedChanges := s.parseStatus(out)
+	// Parse the status to extract staged and unstaged changes
+	stagedChanges, unstagedChanges := s.parseGoGitStatus(status)
 
 	// Create the repository status
-	isClean := len(stagedChanges) == 0 && len(unstagedChanges) == 0
+	isClean := status.IsClean()
 
 	return &models.RepositoryStatus{
-		Branch:         currentBranch,
-		IsClean:        isClean,
-		StagedChanges:  stagedChanges,
+		Branch:          currentBranch,
+		IsClean:         isClean,
+		StagedChanges:   stagedChanges,
 		UnstagedChanges: unstagedChanges,
 	}, nil
 }
 
-// parseStatus parses the output of git status --porcelain -z
-func (s *GitRepositoryService) parseStatus(output []byte) ([]models.Change, []models.Change) {
-	if len(output) == 0 {
-		return []models.Change{}, []models.Change{}
-	}
-
-	entries := strings.Split(strings.TrimRight(string(output), "\x00"), "\x00")
+// parseGoGitStatus parses the go-git Status object into our models
+func (s *GitRepositoryService) parseGoGitStatus(status git.Status) ([]models.Change, []models.Change) {
 	stagedChanges := make([]models.Change, 0)
 	unstagedChanges := make([]models.Change, 0)
 
-	for _, entry := range entries {
-		if len(entry) < 3 {
-			continue
-		}
-
-		statusCode := entry[0:2]
-		filePath := entry[3:]
-
+	// Iterate through all file statuses
+	for filePath, fileStatus := range status {
 		// Check if the file is staged
-		if statusCode[0] != ' ' && statusCode[0] != '?' {
-			changeType := s.getChangeType(statusCode[0])
+		if fileStatus.Staging != git.Unmodified && fileStatus.Staging != git.Untracked {
+			changeType := s.mapGoGitStatusToChangeType(fileStatus.Staging)
 			stagedChanges = append(stagedChanges, models.NewChange(filePath, changeType, true))
 		}
 
 		// Check if the file is unstaged
-		if statusCode[1] != ' ' {
-			changeType := s.getChangeType(statusCode[1])
+		if fileStatus.Worktree != git.Unmodified {
+			changeType := s.mapGoGitStatusToChangeType(fileStatus.Worktree)
 			unstagedChanges = append(unstagedChanges, models.NewChange(filePath, changeType, false))
 		}
 	}
@@ -251,16 +237,16 @@ func (s *GitRepositoryService) parseStatus(output []byte) ([]models.Change, []mo
 	return stagedChanges, unstagedChanges
 }
 
-// getChangeType converts a git status code to a ChangeType
-func (s *GitRepositoryService) getChangeType(code byte) models.ChangeType {
-	switch code {
-	case 'A':
+// mapGoGitStatusToChangeType maps go-git status to our ChangeType
+func (s *GitRepositoryService) mapGoGitStatusToChangeType(status git.StatusCode) models.ChangeType {
+	switch status {
+	case git.Added, git.Untracked:
 		return models.Added
-	case 'M':
+	case git.Modified, git.UpdatedButUnmerged:
 		return models.Modified
-	case 'D':
+	case git.Deleted:
 		return models.Deleted
-	case 'R':
+	case git.Renamed:
 		return models.Renamed
 	default:
 		// For simplicity, treat everything else as modified
