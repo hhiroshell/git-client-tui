@@ -5,10 +5,10 @@
 
 ## Setup Tasks
 
-- [ ] T001 Create project structure per implementation plan
-- [ ] T002 Initialize Go project with Cobra CLI and required dependencies
-- [ ] T003 [P] Configure linting and formatting tools
-- [ ] T004 [P] Create basic CLI scaffolding with Cobra
+- [x] T001 Create project structure per implementation plan
+- [x] T002 Initialize Go project with Cobra CLI and required dependencies
+- [x] T003 [P] Configure linting and formatting tools
+- [x] T004 [P] Create basic CLI scaffolding with Cobra
 
 ## Test First Tasks (TDD)
 
