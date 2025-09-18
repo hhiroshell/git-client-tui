@@ -76,9 +76,7 @@ src/
 └── lib/
 
 tests/
-├── contract/
-├── integration/
-└── unit/
+└── integration/
 
 # Option 2: Web application (when "frontend" + "backend" detected)
 backend/
@@ -139,9 +137,9 @@ ios/ or android/
    - Use standard REST/GraphQL patterns
    - Output OpenAPI/GraphQL schema to `/contracts/`
 
-3. **Generate contract tests** from contracts:
-   - One test file per endpoint
-   - Assert request/response schemas
+3. **Generate unit tests** from interfaces:
+   - One test file per method
+   - Mock dependencies and assert behavior
    - Tests must fail (no implementation yet)
 
 4. **Extract test scenarios** from user stories:
@@ -163,8 +161,8 @@ ios/ or android/
 
 **Task Generation Strategy**:
 - Load `.specify/templates/tasks-template.md` as base
-- Generate tasks from Phase 1 design docs (contracts, data model, quickstart)
-- Each contract → contract test task [P]
+- Generate tasks from Phase 1 design docs (interfaces, data model, quickstart)
+- Each interface method → unit test task [P]
 - Each entity → model creation task [P] 
 - Each user story → integration test task
 - Implementation tasks to make tests pass

@@ -1,4 +1,4 @@
-# Repository Service Contract
+# Repository Service Unit Tests
 
 ## Interface Definition
 
@@ -16,21 +16,70 @@ type RepositoryService interface {
 }
 ```
 
-### Input/Output Contracts
+## Unit Test Plan
 
-#### DiscoverRepository()
-**Input**: None (uses current working directory)
-**Output**:
-- Success: `Repository` with path, current branch, clean status
-- Error: `ErrNotARepository` if no .git found, `ErrPermissionDenied` if access denied
+### DiscoverRepository() Unit Tests
 
-#### GetStatus()
-**Input**: None
-**Output**:
-- Success: `RepositoryStatus` with staged/unstaged changes
-- Error: `ErrGitCommandFailed` if git status fails
+1. **TestDiscoverRepositorySuccess**
+   - **Setup**: Create a test directory with a .git folder
+   - **Mock**: Mock the filesystem operations to return a valid git repository path
+   - **Assertions**: 
+     - Verify Repository struct is returned with correct path
+     - Verify no error is returned
 
-## Error Contracts
+2. **TestDiscoverRepositoryNotFound**
+   - **Setup**: Create a test directory without a .git folder
+   - **Mock**: Mock the filesystem operations to simulate no git repository
+   - **Assertions**: 
+     - Verify ErrNotARepository is returned
+     - Verify nil Repository is returned
+
+3. **TestDiscoverRepositoryPermissionDenied**
+   - **Setup**: Create a test directory with permissions issue
+   - **Mock**: Mock filesystem operations to return permission denied error
+   - **Assertions**: 
+     - Verify ErrPermissionDenied is returned
+     - Verify nil Repository is returned
+
+### GetStatus() Unit Tests
+
+1. **TestGetStatusSuccess**
+   - **Setup**: Create a mock repository with known state
+   - **Mock**: Mock git command execution to return predictable status output
+   - **Assertions**: 
+     - Verify RepositoryStatus contains expected staged/unstaged changes
+     - Verify no error is returned
+
+2. **TestGetStatusCommandFailure**
+   - **Setup**: Create a mock repository
+   - **Mock**: Mock git command to fail with specific error
+   - **Assertions**: 
+     - Verify ErrGitCommandFailed is returned
+     - Verify nil RepositoryStatus is returned
+
+3. **TestGetStatusWithFileChanges**
+   - **Setup**: Create a mock repository with specific file changes
+   - **Mock**: Mock git command to return status with modified, added, deleted files
+   - **Assertions**: 
+     - Verify RepositoryStatus correctly categorizes each file change
+     - Verify file paths and change types match expectations
+
+### Refresh() Unit Tests
+
+1. **TestRefreshSuccess**
+   - **Setup**: Create a mock repository
+   - **Mock**: Mock necessary git commands to simulate refresh
+   - **Assertions**: 
+     - Verify no error is returned
+     - Verify repository state is updated
+
+2. **TestRefreshFailure**
+   - **Setup**: Create a mock repository
+   - **Mock**: Mock git commands to fail during refresh
+   - **Assertions**: 
+     - Verify appropriate error is returned
+
+## Error Handling
 
 ### Standard Errors
 ```go
@@ -43,11 +92,11 @@ var (
 )
 ```
 
-### Error Response Format
-```go
-type ServiceError struct {
-    Operation string
-    Cause     error
-    Context   map[string]interface{}
-}
-```
+### Error Handling Tests
+
+1. **TestRepositoryServiceErrorWrapping**
+   - **Setup**: Create scenarios that trigger different errors
+   - **Assertions**: 
+     - Verify errors are properly wrapped with context
+     - Verify error messages are descriptive and helpful
+     - Verify error types can be identified through errors.Is()

@@ -15,24 +15,24 @@
 **CRITICAL: These tests MUST be written and MUST FAIL before ANY implementation**
 
 ### Repository Management Tests
-- [ ] T005 [P] Contract test for RepositoryService.DiscoverRepository in tests/contract/repository/discover_test.go
-- [ ] T006 [P] Contract test for RepositoryService.GetStatus in tests/contract/repository/status_test.go
+- [x] T005 [P] Unit test for RepositoryService.DiscoverRepository in src/services/repository/repository_test.go
+- [x] T006 [P] Unit test for RepositoryService.GetStatus in src/services/repository/repository_test.go
 
 ### Branch Management Tests
-- [ ] T007 [P] Contract test for BranchService.ListBranches in tests/contract/branch/list_test.go
-- [ ] T008 [P] Contract test for BranchService.CreateBranch in tests/contract/branch/create_test.go
-- [ ] T009 [P] Contract test for BranchService.SwitchBranch in tests/contract/branch/switch_test.go
-- [ ] T010 [P] Contract test for BranchService.MergeBranch in tests/contract/branch/merge_test.go
+- [ ] T007 [P] Unit test for BranchService.ListBranches in src/services/branch/branch_test.go
+- [ ] T008 [P] Unit test for BranchService.CreateBranch in src/services/branch/branch_test.go
+- [ ] T009 [P] Unit test for BranchService.SwitchBranch in src/services/branch/branch_test.go
+- [ ] T010 [P] Unit test for BranchService.MergeBranch in src/services/branch/branch_test.go
 
 ### Staging Tests
-- [ ] T011 [P] Contract test for StagingService.StageFile in tests/contract/staging/file_test.go
-- [ ] T012 [P] Contract test for StagingService.StageHunks in tests/contract/staging/hunk_test.go
-- [ ] T013 [P] Contract test for StagingService.StageLines in tests/contract/staging/line_test.go
+- [ ] T011 [P] Unit test for StagingService.StageFile in src/services/staging/staging_test.go
+- [ ] T012 [P] Unit test for StagingService.StageHunks in src/services/staging/staging_test.go
+- [ ] T013 [P] Unit test for StagingService.StageLines in src/services/staging/staging_test.go
 
 ### Commit Tests
-- [ ] T014 [P] Contract test for CommitService.GetCommitHistory in tests/contract/commit/history_test.go
-- [ ] T015 [P] Contract test for CommitService.CreateCommit in tests/contract/commit/create_test.go
-- [ ] T016 [P] Contract test for CommitService.SquashCommits in tests/contract/commit/squash_test.go
+- [ ] T014 [P] Unit test for CommitService.GetCommitHistory in src/services/commit/commit_test.go
+- [ ] T015 [P] Unit test for CommitService.CreateCommit in src/services/commit/commit_test.go
+- [ ] T016 [P] Unit test for CommitService.SquashCommits in src/services/commit/commit_test.go
 
 ### Integration Tests
 - [ ] T017 [P] Integration test for file-level staging workflow in tests/integration/staging_file_test.go
@@ -43,15 +43,15 @@
 ## Core Implementation Tasks
 
 ### Model Implementation
-- [ ] T021 [P] Implement Repository model in src/models/repository.go
+- [x] T021 [P] Implement Repository model in src/models/repository.go
 - [ ] T022 [P] Implement Branch model in src/models/branch.go
 - [ ] T023 [P] Implement Commit model in src/models/commit.go
-- [ ] T024 [P] Implement Change model in src/models/change.go
-- [ ] T025 [P] Implement Hunk model in src/models/hunk.go
-- [ ] T026 [P] Implement Line model in src/models/line.go
+- [x] T024 [P] Implement Change model in src/models/change.go
+- [x] T025 [P] Implement Hunk model in src/models/hunk.go
+- [x] T026 [P] Implement Line model in src/models/line.go
 
 ### Service Implementation
-- [ ] T027 Implement RepositoryService interface in src/services/repository/repository.go
+- [x] T027 Implement RepositoryService interface in src/services/repository/repository.go
 - [ ] T028 Implement BranchService interface in src/services/branch/branch.go
 - [ ] T029 Implement StagingService interface in src/services/staging/staging.go
 - [ ] T030 Implement CommitService interface in src/services/commit/commit.go
@@ -79,8 +79,8 @@
 
 ## Polish Tasks
 
-- [ ] T047 [P] Add unit tests for diff parser in tests/unit/diff/parser_test.go
-- [ ] T048 [P] Add unit tests for patch generator in tests/unit/patch/generator_test.go
+- [ ] T047 [P] Add unit tests for diff parser in src/lib/diff/parser_test.go
+- [ ] T048 [P] Add unit tests for patch generator in src/lib/patch/generator_test.go
 - [ ] T049 [P] Performance optimization for large repositories
 - [ ] T050 [P] Add terminal size detection and responsive layout
 - [ ] T051 [P] Create user documentation in docs/usage.md
@@ -106,11 +106,11 @@ Task: "Implement Change model in src/models/change.go"
 Task: "Implement Hunk model in src/models/hunk.go"
 Task: "Implement Line model in src/models/line.go"
 
-# Launch contract tests in parallel:
-Task: "Contract test for RepositoryService.DiscoverRepository in tests/contract/repository/discover_test.go"
-Task: "Contract test for BranchService.ListBranches in tests/contract/branch/list_test.go"
-Task: "Contract test for StagingService.StageFile in tests/contract/staging/file_test.go"
-Task: "Contract test for CommitService.GetCommitHistory in tests/contract/commit/history_test.go"
+# Launch unit tests in parallel:
+Task: "Unit test for RepositoryService.DiscoverRepository in src/services/repository/repository_test.go"
+Task: "Unit test for BranchService.ListBranches in src/services/branch/branch_test.go"
+Task: "Unit test for StagingService.StageFile in src/services/staging/staging_test.go"
+Task: "Unit test for CommitService.GetCommitHistory in src/services/commit/commit_test.go"
 ```
 
 ## Notes

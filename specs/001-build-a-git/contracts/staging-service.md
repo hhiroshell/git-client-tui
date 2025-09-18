@@ -1,4 +1,4 @@
-# Staging Service Contract
+# Staging Service Unit Tests
 
 ## Interface Definition
 
@@ -19,29 +19,101 @@ type StagingService interface {
 }
 ```
 
-### Input/Output Contracts
+## Unit Test Plan
 
-#### StageFile(filePath string)
-**Input**: Relative path to file from repository root
-**Output**:
-- Success: `nil`
-- Error: `ErrFileNotFound`, `ErrInvalidPath`, `ErrGitOperationFailed`
+### StageFile() Unit Tests
 
-#### StageHunks(filePath string, hunkIndexes []int)
-**Input**:
-- `filePath`: Relative path to file
-- `hunkIndexes`: Zero-based indexes of hunks to stage
-**Output**:
-- Success: `nil`
-- Error: `ErrInvalidHunkIndex`, `ErrPatchGenerationFailed`
+1. **TestStageFileSuccess**
+   - **Setup**: Create a mock repository with unstaged file
+   - **Mock**: Mock git command execution for staging file
+   - **Assertions**:
+     - Verify no error is returned
+     - Verify file is staged (via subsequent status check)
 
-#### StageLines(filePath string, lineSelections []LineSelection)
-**Input**:
-- `filePath`: Relative path to file
-- `lineSelections`: Array of line selection ranges
-**Output**:
-- Success: `nil`
-- Error: `ErrInvalidLineSelection`, `ErrPatchApplicationFailed`
+2. **TestStageFileNotFound**
+   - **Setup**: Create a mock repository
+   - **Mock**: Mock git command to fail with file not found error
+   - **Assertions**:
+     - Verify ErrFileNotFound is returned
+
+3. **TestStageFileInvalidPath**
+   - **Setup**: Create a mock repository
+   - **Mock**: Mock validation to fail with invalid path error
+   - **Assertions**:
+     - Verify ErrInvalidPath is returned
+
+4. **TestStageFileBinaryContent**
+   - **Setup**: Create a mock repository with binary file
+   - **Mock**: Mock git command for binary file staging
+   - **Assertions**:
+     - Verify binary file is handled correctly
+     - Verify no error is returned
+
+### UnstageFile() Unit Tests
+
+1. **TestUnstageFileSuccess**
+   - **Setup**: Create a mock repository with staged file
+   - **Mock**: Mock git command execution for unstaging file
+   - **Assertions**:
+     - Verify no error is returned
+     - Verify file is unstaged (via subsequent status check)
+
+2. **TestUnstageFileNotFound**
+   - **Setup**: Create a mock repository
+   - **Mock**: Mock git command to fail with file not found error
+   - **Assertions**:
+     - Verify ErrFileNotFound is returned
+
+3. **TestUnstageFileNotStaged**
+   - **Setup**: Create a mock repository with file that isn't staged
+   - **Mock**: Mock git command execution for unstaging file
+   - **Assertions**:
+     - Verify appropriate handling (should not error)
+     - Verify file remains unstaged
+
+### StageHunks() Unit Tests
+
+1. **TestStageHunksSuccess**
+   - **Setup**: Create a mock repository with file containing multiple hunks
+   - **Mock**: Mock git command execution for patch generation and application
+   - **Assertions**:
+     - Verify no error is returned
+     - Verify specified hunks are staged (via subsequent status check)
+     - Verify unspecified hunks remain unstaged
+
+2. **TestStageHunksInvalidIndex**
+   - **Setup**: Create a mock repository with file containing hunks
+   - **Mock**: Mock validation to fail with invalid hunk index error
+   - **Assertions**:
+     - Verify ErrInvalidHunkIndex is returned
+
+3. **TestStageHunksPatchGenerationFailure**
+   - **Setup**: Create a mock repository with file
+   - **Mock**: Mock patch generation to fail
+   - **Assertions**:
+     - Verify ErrPatchGenerationFailed is returned
+
+### StageLines() Unit Tests
+
+1. **TestStageLinesSuccess**
+   - **Setup**: Create a mock repository with file containing multiple lines
+   - **Mock**: Mock git command execution for fine-grained staging
+   - **Assertions**:
+     - Verify no error is returned
+     - Verify specified lines are staged (via subsequent status check)
+     - Verify unspecified lines remain unstaged
+
+2. **TestStageLinesInvalidSelection**
+   - **Setup**: Create a mock repository with file
+   - **Mock**: Mock validation to fail with invalid line selection error
+   - **Assertions**:
+     - Verify ErrInvalidLineSelection is returned
+
+3. **TestStageLinesPatchApplicationFailure**
+   - **Setup**: Create a mock repository with file
+   - **Mock**: Mock patch application to fail
+   - **Assertions**:
+     - Verify ErrPatchApplicationFailed is returned
 
 ## Data Structures
 
@@ -78,3 +150,19 @@ var (
     ErrStagingConflict      = errors.New("staging conflict detected")
 )
 ```
+
+### Error Handling Tests
+
+1. **TestStagingServiceErrorWrapping**
+   - **Setup**: Create scenarios that trigger different staging-related errors
+   - **Assertions**:
+     - Verify errors are properly wrapped with context
+     - Verify error messages are descriptive and helpful
+     - Verify error types can be identified through errors.Is()
+
+2. **TestStagingConflictHandling**
+   - **Setup**: Create a mock repository with conflicting changes
+   - **Mock**: Mock git commands to detect and report conflicts
+   - **Assertions**:
+     - Verify ErrStagingConflict is returned with proper context
+     - Verify conflict information is correctly provided
