@@ -17,11 +17,11 @@
 - gocui: Lower-level, requires more boilerplate
 
 ### Git Library Selection
-**Decision**: go-git/go-git for core operations, supplemented with git command execution for advanced features
+**Decision**: go-git/go-git for core operations, supplemented with git CLI execution for advanced features
 **Rationale**:
 - Pure Go implementation, no external git dependency
 - Comprehensive support for core git operations (clone, commit, branch, merge)
-- Better error handling and type safety than shelling out to git commands
+- Better error handling and type safety than shelling out to git CLI
 - Can fall back to git CLI for operations not yet supported
 
 **Alternatives considered**:
@@ -37,17 +37,18 @@
 - Clear testability boundaries
 
 ### Line-level Staging Implementation
-**Decision**: Parse git diff output and reconstruct patches for partial staging
+**Decision**: Use go-git patch operations with custom diff parsing for partial staging
 **Rationale**:
-- Git's built-in patch mode provides the foundation
-- Can leverage git apply --cached for precise control
+- go-git provides programmatic access to patch operations
+- Can implement fine-grained staging without git CLI dependency
 - Allows for complex conflict resolution scenarios
+- Better error handling and type safety
 
 **Implementation approach**:
-- Parse diff hunks into individual lines
-- Track selection state for each line
-- Generate patch files for selected changes
-- Apply patches using git apply --cached
+- Use go-git's worktree operations for basic staging
+- Parse diff objects to identify hunks and lines
+- Generate custom patches for selected changes
+- Apply patches using go-git's patch application methods
 
 ## Best Practices Research
 
@@ -73,31 +74,31 @@
 
 ### Diff Parsing Strategy
 ```
-1. Execute git diff --no-prefix --no-color
-2. Parse into file sections
-3. Within each file, parse into hunks
+1. Use go-git's worktree.Diff() to get diff objects
+2. Parse diff objects into file sections
+3. Within each file, parse into hunks using go-git's patch objects
 4. Within each hunk, parse into lines with +/- prefixes
 5. Maintain line mapping to original file positions
 ```
 
 ### Staging Granularity Implementation
-- **File level**: Standard git add/reset operations
-- **Hunk level**: Generate patches from selected hunks
-- **Line level**: Reconstruct hunks from selected lines
+- **File level**: Use go-git worktree.Add() and index operations
+- **Hunk level**: Generate patches from selected hunks using go-git patch objects
+- **Line level**: Reconstruct hunks from selected lines using go-git patch methods
 
 ### Branch Management with Remote Sync
 ```
-1. git fetch --all to update remote references
-2. Parse git branch -a output for complete branch list
-3. Show local/remote status indicators
-4. Handle fast-forward vs merge scenarios
+1. Use go-git repository.Fetch() to update remote references
+2. Use go-git repository.Branches() for complete branch list
+3. Show local/remote status indicators from go-git branch objects
+4. Handle fast-forward vs merge scenarios using go-git merge operations
 ```
 
 ### Performance Considerations
-- **Lazy loading**: Only load diffs when files are expanded
-- **Caching**: Cache git status and branch information
-- **Incremental updates**: Only refresh changed sections
-- **Large file handling**: Paginate very large diffs
+- **Lazy loading**: Only load diffs when files are expanded using go-git on-demand
+- **Caching**: Cache go-git repository state and branch information
+- **Incremental updates**: Only refresh changed sections using go-git status
+- **Large file handling**: Paginate very large diffs from go-git diff objects
 
 ## Integration Requirements
 
@@ -112,7 +113,7 @@
 - Windows: Basic functionality, may need Git for Windows
 
 ### Testing Strategy
-- **Unit tests**: Core git operations and diff parsing
+- **Unit tests**: Core go-git operations and diff parsing
 - **Integration tests**: Full user scenarios with test repositories
 - **TUI tests**: Component behavior and keyboard handling
-- **Contract tests**: Git command compatibility across versions
+- **Contract tests**: go-git library compatibility across versions

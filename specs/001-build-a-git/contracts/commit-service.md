@@ -25,7 +25,7 @@ type CommitService interface {
 
 1. **TestGetCommitHistorySuccess**
    - **Setup**: Create a mock repository with known commit history
-   - **Mock**: Mock git command execution to return predefined commit log
+   - **Mock**: Mock go-git repository.Log to return predefined commit history
    - **Assertions**:
      - Verify returned commits match expected count and order
      - Verify commit details (hash, message, author) are correctly parsed
@@ -40,7 +40,7 @@ type CommitService interface {
 
 3. **TestGetCommitHistoryEmptyRepository**
    - **Setup**: Create a mock empty repository with no commits
-   - **Mock**: Mock git command to return empty log
+   - **Mock**: Mock go-git repository.Log to return empty history
    - **Assertions**:
      - Verify empty array is returned (not nil)
      - Verify no error is returned
@@ -49,7 +49,7 @@ type CommitService interface {
 
 1. **TestSquashCommitsSuccess**
    - **Setup**: Create a mock repository with multiple commits
-   - **Mock**: Mock git command execution for interactive rebase
+   - **Mock**: Mock go-git repository rebase operations for squashing
    - **Assertions**:
      - Verify returned Commit has correct hash and message
      - Verify history is updated correctly
@@ -71,7 +71,7 @@ type CommitService interface {
 
 4. **TestSquashCommitsRebaseConflict**
    - **Setup**: Create a mock repository with conflicting changes
-   - **Mock**: Mock git command to fail during rebase with conflict
+   - **Mock**: Mock go-git rebase operations to fail with conflict
    - **Assertions**:
      - Verify ErrRebaseConflict is returned
      - Verify nil Commit is returned
@@ -80,14 +80,14 @@ type CommitService interface {
 
 1. **TestEditCommitMessageSuccess**
    - **Setup**: Create a mock repository with target commit
-   - **Mock**: Mock git command execution for amending commit message
+   - **Mock**: Mock go-git commit object operations for message editing
    - **Assertions**:
      - Verify no error is returned
      - Verify commit message is updated (via subsequent check)
 
 2. **TestEditCommitMessageNotFound**
    - **Setup**: Create a mock repository
-   - **Mock**: Mock git command to fail with commit not found
+   - **Mock**: Mock go-git repository to fail with commit not found
    - **Assertions**:
      - Verify ErrCommitNotFound is returned
 
@@ -107,14 +107,14 @@ type CommitService interface {
 
 1. **TestCreateCommitSuccess**
    - **Setup**: Create a mock repository with staged changes
-   - **Mock**: Mock git command execution for commit
+   - **Mock**: Mock go-git worktree.Commit operation
    - **Assertions**:
      - Verify returned Commit has correct hash and message
      - Verify no error is returned
 
 2. **TestCreateCommitNoStagedChanges**
    - **Setup**: Create a mock repository with no staged changes
-   - **Mock**: Mock git command to fail with no changes error
+   - **Mock**: Mock go-git worktree.Commit to fail with no changes error
    - **Assertions**:
      - Verify ErrNoStagedChanges is returned
      - Verify nil Commit is returned

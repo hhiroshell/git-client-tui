@@ -45,22 +45,22 @@ type RepositoryService interface {
 
 1. **TestGetStatusSuccess**
    - **Setup**: Create a mock repository with known state
-   - **Mock**: Mock git command execution to return predictable status output
-   - **Assertions**: 
+   - **Mock**: Mock go-git worktree status to return predictable status
+   - **Assertions**:
      - Verify RepositoryStatus contains expected staged/unstaged changes
      - Verify no error is returned
 
-2. **TestGetStatusCommandFailure**
+2. **TestGetStatusOperationFailure**
    - **Setup**: Create a mock repository
-   - **Mock**: Mock git command to fail with specific error
-   - **Assertions**: 
-     - Verify ErrGitCommandFailed is returned
+   - **Mock**: Mock go-git worktree operations to fail with specific error
+   - **Assertions**:
+     - Verify ErrGitOperationFailed is returned
      - Verify nil RepositoryStatus is returned
 
 3. **TestGetStatusWithFileChanges**
    - **Setup**: Create a mock repository with specific file changes
-   - **Mock**: Mock git command to return status with modified, added, deleted files
-   - **Assertions**: 
+   - **Mock**: Mock go-git worktree status to return modified, added, deleted files
+   - **Assertions**:
      - Verify RepositoryStatus correctly categorizes each file change
      - Verify file paths and change types match expectations
 
@@ -68,15 +68,15 @@ type RepositoryService interface {
 
 1. **TestRefreshSuccess**
    - **Setup**: Create a mock repository
-   - **Mock**: Mock necessary git commands to simulate refresh
-   - **Assertions**: 
+   - **Mock**: Mock go-git repository operations to simulate refresh
+   - **Assertions**:
      - Verify no error is returned
      - Verify repository state is updated
 
 2. **TestRefreshFailure**
    - **Setup**: Create a mock repository
-   - **Mock**: Mock git commands to fail during refresh
-   - **Assertions**: 
+   - **Mock**: Mock go-git operations to fail during refresh
+   - **Assertions**:
      - Verify appropriate error is returned
 
 ## Error Handling
@@ -86,7 +86,7 @@ type RepositoryService interface {
 var (
     ErrNotARepository      = errors.New("not a git repository")
     ErrPermissionDenied    = errors.New("permission denied")
-    ErrGitCommandFailed    = errors.New("git command failed")
+    ErrGitOperationFailed  = errors.New("git operation failed")
     ErrInvalidReference    = errors.New("invalid git reference")
     ErrMergeConflict      = errors.New("merge conflict detected")
 )

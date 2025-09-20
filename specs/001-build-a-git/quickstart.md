@@ -150,7 +150,7 @@ gitui
 - ✅ Memory usage < 50MB for repositories with 10k files
 
 ### Error Handling Verification
-- ✅ Graceful degradation when git commands fail
+- ✅ Graceful degradation when go-git operations fail
 - ✅ Clear error messages for user mistakes
 - ✅ No data corruption on unexpected exit
 - ✅ Proper handling of merge conflicts

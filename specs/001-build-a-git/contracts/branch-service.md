@@ -28,7 +28,7 @@ type BranchService interface {
 
 1. **TestListBranchesSuccess**
    - **Setup**: Create a mock repository with known branches
-   - **Mock**: Mock git command execution to return predefined branch list
+   - **Mock**: Mock go-git repository.Branches to return predefined branch list
    - **Assertions**:
      - Verify BranchList contains expected local and remote branches
      - Verify current branch is correctly identified
@@ -36,14 +36,14 @@ type BranchService interface {
 
 2. **TestListBranchesCommandFailure**
    - **Setup**: Create a mock repository
-   - **Mock**: Mock git command to fail with specific error
+   - **Mock**: Mock go-git repository operations to fail with specific error
    - **Assertions**:
-     - Verify ErrGitCommandFailed is returned
+     - Verify ErrGitOperationFailed is returned
      - Verify nil BranchList is returned
 
 3. **TestListBranchesRemoteUnavailable**
    - **Setup**: Create a mock repository with unreachable remote
-   - **Mock**: Mock git command to succeed for local branches but fail for remote branches
+   - **Mock**: Mock go-git repository.Branches to succeed for local but fail for remote
    - **Assertions**:
      - Verify ErrRemoteUnavailable is returned
      - Verify BranchList contains local branches but empty remote branches
@@ -52,20 +52,20 @@ type BranchService interface {
 
 1. **TestCreateBranchSuccess**
    - **Setup**: Create a mock repository
-   - **Mock**: Mock git command execution for branch creation
+   - **Mock**: Mock go-git repository.CreateBranch operation
    - **Assertions**:
      - Verify no error is returned
      - Verify branch is created (via subsequent validation)
 
 2. **TestCreateBranchInvalidName**
    - **Setup**: Create a mock repository
-   - **Mock**: Mock git command to fail with invalid reference error
+   - **Mock**: Mock go-git repository.CreateBranch to fail with invalid reference
    - **Assertions**:
      - Verify ErrInvalidBranchName is returned
 
 3. **TestCreateBranchAlreadyExists**
    - **Setup**: Create a mock repository with existing branch
-   - **Mock**: Mock git command to fail with branch exists error
+   - **Mock**: Mock go-git repository.CreateBranch to fail with branch exists
    - **Assertions**:
      - Verify ErrBranchExists is returned
 
@@ -73,20 +73,20 @@ type BranchService interface {
 
 1. **TestSwitchBranchSuccess**
    - **Setup**: Create a mock repository with multiple branches
-   - **Mock**: Mock git command execution for branch switching
+   - **Mock**: Mock go-git worktree.Checkout operation for branch switching
    - **Assertions**:
      - Verify no error is returned
      - Verify current branch is changed (via subsequent validation)
 
 2. **TestSwitchBranchNotFound**
    - **Setup**: Create a mock repository
-   - **Mock**: Mock git command to fail with branch not found error
+   - **Mock**: Mock go-git worktree.Checkout to fail with branch not found
    - **Assertions**:
      - Verify ErrBranchNotFound is returned
 
 3. **TestSwitchBranchUncommittedChanges**
    - **Setup**: Create a mock repository with uncommitted changes
-   - **Mock**: Mock git command to fail with uncommitted changes error
+   - **Mock**: Mock go-git worktree.Checkout to fail with uncommitted changes
    - **Assertions**:
      - Verify ErrUncommittedChanges is returned
 
@@ -94,21 +94,21 @@ type BranchService interface {
 
 1. **TestMergeBranchSuccess**
    - **Setup**: Create a mock repository with source and target branches
-   - **Mock**: Mock git command execution for branch merging
+   - **Mock**: Mock go-git worktree.Merge operation for branch merging
    - **Assertions**:
      - Verify MergeResult contains expected commit hash and file changes
      - Verify no error is returned
 
 2. **TestMergeBranchFastForward**
    - **Setup**: Create a mock repository with fast-forward merge scenario
-   - **Mock**: Mock git command for fast-forward merge
+   - **Mock**: Mock go-git worktree.Merge for fast-forward merge
    - **Assertions**:
      - Verify MergeResult.FastForward is true
      - Verify MergeResult contains expected changes
 
 3. **TestMergeBranchConflict**
    - **Setup**: Create a mock repository with conflicting changes
-   - **Mock**: Mock git command to fail with merge conflict error
+   - **Mock**: Mock go-git worktree.Merge to fail with merge conflict
    - **Assertions**:
      - Verify ErrMergeConflict is returned
      - Verify MergeResult contains conflict information
@@ -117,13 +117,13 @@ type BranchService interface {
 
 1. **TestFetchRemotesSuccess**
    - **Setup**: Create a mock repository with remotes
-   - **Mock**: Mock git command execution for fetch
+   - **Mock**: Mock go-git repository.Fetch operation
    - **Assertions**:
      - Verify no error is returned
 
 2. **TestFetchRemotesFailure**
    - **Setup**: Create a mock repository with unreachable remote
-   - **Mock**: Mock git command to fail with network error
+   - **Mock**: Mock go-git repository.Fetch to fail with network error
    - **Assertions**:
      - Verify ErrFetchFailed is returned
 

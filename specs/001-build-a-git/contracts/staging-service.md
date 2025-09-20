@@ -25,14 +25,14 @@ type StagingService interface {
 
 1. **TestStageFileSuccess**
    - **Setup**: Create a mock repository with unstaged file
-   - **Mock**: Mock git command execution for staging file
+   - **Mock**: Mock go-git worktree Add operation for staging file
    - **Assertions**:
      - Verify no error is returned
      - Verify file is staged (via subsequent status check)
 
 2. **TestStageFileNotFound**
    - **Setup**: Create a mock repository
-   - **Mock**: Mock git command to fail with file not found error
+   - **Mock**: Mock go-git worktree Add to fail with file not found error
    - **Assertions**:
      - Verify ErrFileNotFound is returned
 
@@ -44,7 +44,7 @@ type StagingService interface {
 
 4. **TestStageFileBinaryContent**
    - **Setup**: Create a mock repository with binary file
-   - **Mock**: Mock git command for binary file staging
+   - **Mock**: Mock go-git worktree Add for binary file staging
    - **Assertions**:
      - Verify binary file is handled correctly
      - Verify no error is returned
@@ -53,20 +53,20 @@ type StagingService interface {
 
 1. **TestUnstageFileSuccess**
    - **Setup**: Create a mock repository with staged file
-   - **Mock**: Mock git command execution for unstaging file
+   - **Mock**: Mock go-git index Reset operation for unstaging file
    - **Assertions**:
      - Verify no error is returned
      - Verify file is unstaged (via subsequent status check)
 
 2. **TestUnstageFileNotFound**
    - **Setup**: Create a mock repository
-   - **Mock**: Mock git command to fail with file not found error
+   - **Mock**: Mock go-git index Reset to fail with file not found error
    - **Assertions**:
      - Verify ErrFileNotFound is returned
 
 3. **TestUnstageFileNotStaged**
    - **Setup**: Create a mock repository with file that isn't staged
-   - **Mock**: Mock git command execution for unstaging file
+   - **Mock**: Mock go-git index Reset operation for unstaging file
    - **Assertions**:
      - Verify appropriate handling (should not error)
      - Verify file remains unstaged
@@ -75,7 +75,7 @@ type StagingService interface {
 
 1. **TestStageHunksSuccess**
    - **Setup**: Create a mock repository with file containing multiple hunks
-   - **Mock**: Mock git command execution for patch generation and application
+   - **Mock**: Mock go-git patch operations for hunk staging
    - **Assertions**:
      - Verify no error is returned
      - Verify specified hunks are staged (via subsequent status check)
@@ -97,7 +97,7 @@ type StagingService interface {
 
 1. **TestStageLinesSuccess**
    - **Setup**: Create a mock repository with file containing multiple lines
-   - **Mock**: Mock git command execution for fine-grained staging
+   - **Mock**: Mock go-git patch operations for line-level staging
    - **Assertions**:
      - Verify no error is returned
      - Verify specified lines are staged (via subsequent status check)
@@ -162,7 +162,7 @@ var (
 
 2. **TestStagingConflictHandling**
    - **Setup**: Create a mock repository with conflicting changes
-   - **Mock**: Mock git commands to detect and report conflicts
+   - **Mock**: Mock go-git operations to detect and report conflicts
    - **Assertions**:
      - Verify ErrStagingConflict is returned with proper context
      - Verify conflict information is correctly provided
